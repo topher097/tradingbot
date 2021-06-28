@@ -3,6 +3,7 @@ import json
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
 
+
 class BinanceConnect():
     def __init__(self):
         self.client
@@ -12,10 +13,12 @@ class BinanceConnect():
         self.address
         self.withdrawHistory
 
-    def createClient(self):
+    def createClient(self, credentialsFileName):
         # Create client session using api credentials
         try:
-            with open("credentials.json", "r") as file:
+            # Insert api_key and api_secret into file called credentials.json
+            # See bin/example_credentials.json for reference
+            with open(credentialsFileName, "r") as file:
                 data        = file.read()
                 creds       = json.loads(data)
                 api_key     = creds["api_key"]
