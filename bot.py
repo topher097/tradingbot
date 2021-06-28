@@ -1,5 +1,4 @@
 from BinanceConnect import *
-<<<<<<< HEAD
 from KlineData import *
 from Technical import *
 import json
@@ -8,13 +7,10 @@ import os
 import csv
 from datetime import datetime
 from matplotlib import pyplot as plt
-=======
->>>>>>> parent of 5476c99 (added pickle historical data)
 
 
 class TradingBot():
     def __init__(self):
-<<<<<<< HEAD
         self.credentialsFileName    = "bin/credentials.json"
         self.methodFileName         = "bin/methods.json"
         self.tradePairsFileName     = "bin/tradingpairs.json"
@@ -55,10 +51,6 @@ class TradingBot():
         except Exception as e:
             print(f"Failed to save methods, error: {e}")
     
-=======
-        self.tradingPairs
-        
->>>>>>> parent of 5476c99 (added pickle historical data)
         
         BinanceConnect.createClient(self)           # Connect to binance via api
         self.getTradingPairs(self)                  # Get the valid trading pairs to trade
@@ -69,7 +61,6 @@ class TradingBot():
         with open(self.tradePairsFileName, "r") as file:
             data                = file.read()
             self.tradingPairs   = json.loads(data)["pairs"]
-<<<<<<< HEAD
             self.tradingCoins   = json.loads(data)["coins"]
             print(f"Loaded target trading pairs: {', '.join(self.tradingPairs)}")
             print(f"Loaded coins: {', '.join(self.tradingCoins)}")
@@ -122,14 +113,6 @@ class TradingBot():
 
         
         
-=======
-
-    def test(self):
-        BinanceConnect.getAllPrices(self)
-        BinanceConnect.get
-        print(self.tradingPairs)
-        print()
->>>>>>> parent of 5476c99 (added pickle historical data)
 
 
 if "__name__" == "__main__":

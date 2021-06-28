@@ -1,0 +1,5 @@
+// Get websocket stream of btcusdt trades
+wscat -c wss://stream.binance.com:9443/ws/btcusdt@trade
+
+// Get websocket stream of btcusdt 5m candles
+wscat -c wss://stream.binance.com:9443/ws/btcusdt@kline_5m
