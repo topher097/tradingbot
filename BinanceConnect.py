@@ -21,7 +21,7 @@ class BinanceConnect():
                 creds       = json.loads(data)
                 api_key     = creds["api_key"]
                 api_secret  = creds["api_secret"]
-                self.client = Client(api_key, api_secret)
+                self.client = Client(api_key, api_secret, tld='us')
         except Exception as e:
             logger.critical(e)
             exit()
@@ -44,49 +44,119 @@ class BinanceConnect():
         self.client.ping()
 
     def getExchangeInfo(self):
-        return self.client.get_exchange_info()
+        try:
+            result = self.client.get_exchange_info()
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     """ *************** ACCOUNT METHODS *************** """
     def getAccountInfo(self):
-        return self.client.get_account()
+        try:
+            result = self.client.get_account()
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getAccountStatus(self):
-        return self.client.get_account_status()
+        try:
+            result = self.client.get_account_status()
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getAccountTradingStatus(self):
-        return self.client.get_account_api_trading_status()
+        try:
+            result = self.client.get_account_api_trading_status()
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
     
     def getAssetDetails(self):
-        return self.client.get_asset_details()
+        try:
+            result = self.client.get_asset_details()
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getAssetBalance(self, asset='USD'):
-        return self.client.get_asset_balance(asset=asset) 
+        try:
+            result = self.client.get_asset_balance(asset=asset)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e) 
 
     def getCoinAddress(self, coin):
-        return self.client.get_deposit_address(coi=coin)
+        try:
+            result = self.client.get_deposit_address(coi=coin)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getWithdrawHistory(self, coin):
-        return self.client.get_withdraw_history(coin=coin)
+        try:
+            result = self.client.get_withdraw_history(coin=coin)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     """ *************** MARKET METHODS *************** """
     def getDepth(self, pair):
-        return self.client.get_order_book(symbol=pair)
+        try:
+            result = self.client.get_order_book(symbol=pair)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getPrice(self, pair):
-        return self.client.get_ticker(symbol=pair)
+        try:
+            result = self.client.get_ticker(symbol=pair)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
     
     def getAllPrices(self):
-        return self.client.get_all_tickers()
+        try:
+            result = self.client.get_all_tickers()
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     """ *************** TRADING & ORDER METHODS *************** """
     def getTradesOfPair(self, pair):
-        return self.client.get_my_trades(symbol=pair)
+        try:
+            result = self.client.get_my_trades(symbol=pair)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getTradeFeesOfPair(self, pair):
-        return self.client.get_trade_fee(symbol=pair)
+        try:
+            result = self.client.get_trade_fee(symbol=pair)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def fetchAllPairOrders(self, pair, limit=10):
-        return self.client.get_all_orders(symbol=pair, limit=limit)
+        try:
+            result = self.client.get_all_orders(symbol=pair, limit=limit)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def placeOrder(self, pair=None, side=None, orderType=None, timeInForce=TIME_IN_FORCE_GTC, quantity=None, price=None):
         try:
@@ -96,25 +166,40 @@ class BinanceConnect():
                                      timeInForce=timeInForce,
                                      quantity=quantity,
                                      price=price)
-            return f"Order created: {pair}, {side}, {orderType}, {timeInForce}, {quantity}, {price}"
+            logger.inf0(f"Order created: {pair}, {side}, {orderType}, {timeInForce}, {quantity}, {price}")
         except Exception as e:
-            return e
+            logger.error(e)
 
     def cancelOrder(self, pair, orderID):
         try:
             self.client.cancel_order(symbol=pair, orderID=orderID)
-            return f"Order cancelled: {pair}, {orderID}"
+            logger.info(f"Order cancelled: {pair}, {orderID}")
         except Exception as e:
-            return e
+            logger.error(e)
 
     def getOrderStatus(self, pair, orderID):
-        return self.client.get_order(symbol=pair, orderID=orderID)
+        try:
+            result = self.client.get_order(symbol=pair, orderID=orderID)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
     
     def getOpenPairOrders(self, pair):
-        return self.client.get_open_orders(symbol=pair)
+        try:
+            result = self.client.get_open_orders(symbol=pair)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getAllPairOrders(self, pair):
-        return self.client.get_all_orders(symbol=pair)
+        try:
+            result = self.client.get_all_orders(symbol=pair)
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
         
 
 

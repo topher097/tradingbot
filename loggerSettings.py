@@ -18,25 +18,24 @@ logging_config = dict(
     handlers={
         'api-logger': {'class': 'logging.handlers.RotatingFileHandler',
                            'formatter': 'verbose',
-                           'level': logging.DEBUG,
+                           'level': 'DEBUG',
                            'filename': f'logs/api_{int(time.time())}.log',
+                           'mode': 'w',
                            'maxBytes': 52428800,
                            'backupCount': 7},
         'console': {
             'class': 'logging.StreamHandler',
             'level': 'DEBUG',
-            'formatter': 'simple',
-            'stream': sys.stdout,
-        },
+            'formatter': 'simple'}
     },
     loggers={
         'api_logger': {
             'handlers': ['api-logger', 'console'],
-            'level': logging.DEBUG
+            'level': 'DEBUG'
         },
     }
 )
 
 dictConfig(logging_config)
 
-logger = logging.getLogger('api-logger')
+logger = logging.getLogger('api_logger')

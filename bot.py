@@ -2,9 +2,7 @@ from BinanceConnect import *
 from KlineData import *
 from Technical import *
 import json
-import pickle
 import os
-import csv
 from loggerSettings import logger
 from datetime import datetime
 from matplotlib import pyplot as plt
@@ -24,9 +22,9 @@ class TradingBot():
         self.kLinesTA               = {}
         self.methods                = {}
 
-        print("hi")
         """ Initiate Logging File """
-        logger.info("start bot")
+        logger.debug("start bot")
+        print(logger.handlers)
         
         """ Run initialization methods """
         BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
@@ -96,8 +94,8 @@ class TradingBot():
         pass
 
     def test(self):
-        print('hi')
-        logger.debug(BinanceConnect.getAccountInfo(self))
+        accountInfo = BinanceConnect.getAccountInfo(self)
+        print(accountInfo)
 
     def updateAccountReport(self):
         with open(self.accountReportFileName, 'r+') as file:
@@ -123,9 +121,5 @@ class TradingBot():
                 
 
 
-        
-        
-
-
-if "__name__" == "__main__":
+if __name__ == "__main__":
     bot = TradingBot()
