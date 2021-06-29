@@ -23,8 +23,7 @@ class TradingBot():
         self.methods                = {}
 
         """ Initiate Logging File """
-        logger.debug("start bot")
-        print(logger.handlers)
+        logger.info("starting bot")
         
         """ Run initialization methods """
         BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
@@ -94,8 +93,29 @@ class TradingBot():
         pass
 
     def test(self):
-        accountInfo = BinanceConnect.getAccountInfo(self)
-        print(accountInfo)
+        #BinanceConnect.pingServer(self)
+        #BinanceConnect.getAccountInfo(self)
+        #BinanceConnect.getServerTime(self)
+        #BinanceConnect.getSystemStatus(self)       # error
+        #BinanceConnect.getAssetDetails(self)       # error
+        #BinanceConnect.getWithdrawHistory(self, coin='ADA')
+        #BinanceConnect.getAssetBalance(self, asset='VET')
+        # BinanceConnect.placeTestOrder(self, 
+        #                               pair='ETHUSDC', 
+        #                               side=Client.SIDE_BUY, 
+        #                               orderType=Client.ORDER_TYPE_LIMIT, 
+        #                               timeInForce=TIME_IN_FORCE_GTC, 
+        #                               quantity='0.01', 
+        #                               price='1000.00')
+         
+        self.client.create_order(symbol='VETUSDT', 
+                                      side=Client.SIDE_SELL, 
+                                      type=Client.ORDER_TYPE_LIMIT, 
+                                      timeInForce=TIME_IN_FORCE_GTC, 
+                                      quantity='1', 
+                                      price='0.090')
+        
+        
 
     def updateAccountReport(self):
         with open(self.accountReportFileName, 'r+') as file:

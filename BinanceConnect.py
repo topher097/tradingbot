@@ -21,7 +21,7 @@ class BinanceConnect():
                 creds       = json.loads(data)
                 api_key     = creds["api_key"]
                 api_secret  = creds["api_secret"]
-                self.client = Client(api_key, api_secret, tld='us')
+                self.client = Client(api_key, api_secret, tld='us', requests_params={"verify": True, "timeout": 20})
         except Exception as e:
             logger.critical(e)
             exit()
@@ -29,7 +29,12 @@ class BinanceConnect():
             logger.info("Successful client creation")
 
     def getSystemStatus(self):
-        return self.client.get_system_status()
+        try:
+            result = self.client.get_system_status()
+            logger.debug(result)
+            return result
+        except Exception as e:
+            logger.error(e)
 
     def getServerTime(self):
         try:
@@ -39,9 +44,12 @@ class BinanceConnect():
         except Exception as e:
             logger.error(e)
         
-    
     def pingServer(self):
-        self.client.ping()
+        try:
+            self.client.ping()
+            logger.debug('pinged server')
+        except Exception as e:
+            logger.error(e)
 
     def getExchangeInfo(self):
         try:
@@ -166,7 +174,21 @@ class BinanceConnect():
                                      timeInForce=timeInForce,
                                      quantity=quantity,
                                      price=price)
-            logger.inf0(f"Order created: {pair}, {side}, {orderType}, {timeInForce}, {quantity}, {price}")
+            logger.info(f"Order created: {pair}, {side}, {orderType}, {timeInForce}, {quantity}, {price}")
+            
+        except Exception as e:
+            print(e)
+            logger.error(e)
+
+    def placeTestOrder(self, pair=None, side=None, orderType=None, timeInForce=TIME_IN_FORCE_GTC, quantity=None, price=None):
+        try:
+            self.client.create_test_order(symbol=pair,
+                                          side=side,
+                                          type=orderType,
+                                          timeInForce=timeInForce,
+                                          quantity=quantity,
+                                          price=price)
+            logger.info(f"Test order created: {pair}, {side}, {orderType}, {timeInForce}, {quantity}, {price}")
         except Exception as e:
             logger.error(e)
 
