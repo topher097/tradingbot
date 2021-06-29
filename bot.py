@@ -5,6 +5,7 @@ import json
 import pickle
 import os
 import csv
+from loggerSettings import logger
 from datetime import datetime
 from matplotlib import pyplot as plt
 
@@ -15,6 +16,7 @@ class TradingBot():
         self.methodFileName         = "bin/methods.json"
         self.tradePairsFileName     = "bin/tradingpairs.json"
         self.availPairsFileName     = "bin/availabletradingpairs.json"
+        self.accountReportFileName  = "bin/accountReport.json"
         self.BASEDIR                = os.path.dirname(os.path.realpath(__file__))
         self.tradingPairs           = []
         self.tradingCoins           = []
@@ -22,14 +24,17 @@ class TradingBot():
         self.kLinesTA               = {}
         self.methods                = {}
 
+        print("hi")
+        """ Initiate Logging File """
+        logger.info("start bot")
         
         """ Run initialization methods """
         BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
         TradingBot.getTradingPairsAndCoins(self)                        # Get the target trading pairs to trade
         TradingBot.loadMethodsJSON(self)                                # Load the current methods
-        TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
+        #TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
         #KlineData.saveHistoricalData(self, self.tradingPairs)
-        #TradingBot.test(self)
+        TradingBot.test(self)
         #TradingBot.backtestMethods(self, pairs=self.tradingPairs)
 
     def loadMethodsJSON(self):
@@ -38,43 +43,39 @@ class TradingBot():
             with open(self.methodFileName, "r") as file:
                 data            = file.read()
                 self.methods    = json.loads(data)
-            print(f"Successfully loaded methods from {self.methodFileName}")
+            logger.info(f"Successfully loaded methods from {self.methodFileName}")
         except Exception as e:
-            print(f"Failed to load methods, error: {e}")
+            logger.error(f"Failed to load methods, error: {e}")
     
     def saveMethodsJSON(self):
         # Save the current methods to the JSON file
         try:
             with open(self.methodFileName, "w") as file:
                 json.dump(self.methods, file)
-            print(f"Successfully saved methods to {self.methodFileName}")
+            logger.info(f"Successfully saved methods to {self.methodFileName}")
         except Exception as e:
-            print(f"Failed to save methods, error: {e}")
-    
+            logger.warning(f"Failed to save methods, error: {e}")             
         
-        BinanceConnect.createClient(self)           # Connect to binance via api
-        self.getTradingPairs(self)                  # Get the valid trading pairs to trade
-              
-        
-    def getTradingPairs(self):
+    def getTradingPairsAndCoins(self):
         # Get list of target trading pairs
         with open(self.tradePairsFileName, "r") as file:
             data                = file.read()
             self.tradingPairs   = json.loads(data)["pairs"]
             self.tradingCoins   = json.loads(data)["coins"]
-            print(f"Loaded target trading pairs: {', '.join(self.tradingPairs)}")
-            print(f"Loaded coins: {', '.join(self.tradingCoins)}")
+            logger.info(f"Loaded target trading pairs: {', '.join(self.tradingPairs)}")
+            logger.info(f"Loaded coins: {', '.join(self.tradingCoins)}")
     
     def backtestMethods(self, pairs, methods=['RSI']):
         # Get historical data for trading pairs given parameters below:
         timeInterval    = '1h'
         start           = 'Jan 1, 2021'
         stop            = 'Jun 1, 2021'
+        # Iterate through pairs data
         for pair in pairs:
-            print(f"Backtesting methods on {pair}")
+            logger.info(f"Backtesting methods on {pair}")
             kLines = KlineData.loadHistoricalCSVData(self, pair, timeInterval, start, stop)
             if not kLines.any():
-                print(f"kLine data empty, going to next pair...")
+                logger.warning(f"kLine data empty, going to next pair...")
                 break
             self.kLinesData[pair] = kLines
             self.kLinesTA[pair] = {}
@@ -89,14 +90,25 @@ class TradingBot():
             
 
         #plt.show()
-        print(f"Finished loading kLine data for pairs: [{', '.join(pairs)}] given paramaters time interval: {timeInterval}, start: {start}, and stop: {stop}")
+        logger.info(f"Finished loading kLine data for pairs: [{', '.join(pairs)}] given paramaters time interval: {timeInterval}, start: {start}, and stop: {stop}")
     
     def plotKlineData(self, kLines):
         pass
 
-
     def test(self):
-        print(self.methods)
+        print('hi')
+        logger.debug(BinanceConnect.getAccountInfo(self))
+
+    def updateAccountReport(self):
+        with open(self.accountReportFileName, 'r+') as file:
+            fileData= json.load(file)
+            time = int(datetime.strftime("%s"))
+            body = 1
+            newEntry = {str(datetime.strftime("%s")) : {"USD Bal" : BinanceConnect.getAssetBalance(asset='USD')}}
+            fileData.update(newEntry)
+            file.seek(0)
+            json.dump(fileData, file)
+
 
     def createLegalPairsJSON(self):
         prices = BinanceConnect.getAllPrices(self)
