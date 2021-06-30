@@ -1,7 +1,7 @@
 credentials.json
-__pycache__/
 historical_data/
 historical_data_csv/
 accountReport.json
 trade_logs/
 logs/
+__pycache__/

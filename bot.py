@@ -1,11 +1,12 @@
 from BinanceConnect import *
 from KlineData import *
-from Technical import *
+#from Technical import *
+from Training import *
 import json
 import os
 from loggerSettings import logger
 from datetime import datetime
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 
 
 class TradingBot():
@@ -29,9 +30,9 @@ class TradingBot():
         self.client = BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
         TradingBot.getTradingPairsAndAssets(self)                                     # Get the target trading pairs to trade
         TradingBot.loadMethodsJSON(self)                                              # Load the current methods
-        #TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
+        TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
         #KlineData.saveHistoricalData(self, self.tradingPairs)
-        TradingBot.test(self)
+        #TradingBot.test(self)
         #TradingBot.backtestMethods(self, pairs=self.tradingPairs)
 
     def loadMethodsJSON(self):
@@ -77,29 +78,23 @@ class TradingBot():
             self.kLinesData[pair] = kLines
             self.kLinesTA[pair] = {}
             # Get RSI of historical data
-            if 'RSI' in methods:     self.kLinesTA[pair]['RSI'] = Technical.getRSI(self, kLines, type=self.methods['RSI']['type'], timePeriod=self.methods['RSI']['timePeriod'])
-            else:                    self.kLinesTA[pair]['RSI'] = []
+            #if 'RSI' in methods:     self.kLinesTA[pair]['RSI'] = Technical.getRSI(self, kLines, type=self.methods['RSI']['type'], timePeriod=self.methods['RSI']['timePeriod'])
+            #else:                    self.kLinesTA[pair]['RSI'] = []
             # Get Parabolic SAR of historical data
-            if 'PSAR' in methods:    self.kLinesTA[pair]['PSAR'] = Technical.getParabolicSAR(self, kLines, acceleration=self.methods['PSAR']['acceleration'], maximum=self.methods['PSAR']['maximum'])
-            else:                    self.kLinesTA[pair]['PSAR'] = []
-            for key in methods:
-                print(key, self.kLinesTA[pair][key])
+            #if 'PSAR' in methods:    self.kLinesTA[pair]['PSAR'] = Technical.getParabolicSAR(self, kLines, acceleration=self.methods['PSAR']['acceleration'], maximum=self.methods['PSAR']['maximum'])
+            #else:                    self.kLinesTA[pair]['PSAR'] = []
             
+            Training.preprocessData(self, klines=kLines)
+            plt.show()            
 
-        #plt.show()
         logger.info(f"Finished loading kLine data for pairs: [{', '.join(pairs)}] given paramaters time interval: {timeInterval}, start: {start}, and stop: {stop}")
     
     def plotKlineData(self, kLines):
         pass
 
     def test(self):
-        #BinanceConnect.pingServer(self)
-        #BinanceConnect.getAccountInfo(self)
-        #BinanceConnect.getServerTime(self)
         #BinanceConnect.getSystemStatus(self)       # error
         #BinanceConnect.getAssetDetails(self)       # error
-        #BinanceConnect.getWithdrawHistory(self, coin='ADA')
-        #BinanceConnect.getAssetBalance(self, asset='VET')
         #BinanceConnect.getAccountTradingStatus(self)    # error
         lot = BinanceConnect.calcMinLotParamsAtMarketPrice(self, pair='VETUSD', minLotPrice=10.1)
         BinanceConnect.placeTestOrder(self, 

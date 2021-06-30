@@ -61,7 +61,7 @@ class KlineData():
                     except Exception as e:
                         logger.error(f"failed to save kline data, error: {e}")
 
-    def loadHistoricalPickelData(self, pair, timeInterval, start, stop):
+    def loadHistoricalPickleData(self, pair, timeInterval, start, stop):
         try:
             print(f"Fetching historical pickle kLine data for {pair}")
             fileName = KlineData.getPickleFileName(self, pair, timeInterval, start, stop)
@@ -96,7 +96,7 @@ class KlineData():
                 with open(filePathCSV, 'w', newline='') as csvf:
                     candlestick_writer = csv.writer(csvf, delimiter=',')
                     candlestick_writer.writerows(kLines)
-                logger.debug(f"saved kline data csv to: {fileNameCSV}")
+                logger.debug(f"Saved kline data csv to: {fileNameCSV}")
             kLines = genfromtxt(fileNameCSV, delimiter=',')
             logger.info(f"Successfully fetched kLine CSV historical data for {pair} as numpy array")
             return kLines
