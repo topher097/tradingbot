@@ -17,7 +17,7 @@ class TradingBot():
         self.accountReportFileName  = "bin/accountReport.json"
         self.BASEDIR                = os.path.dirname(os.path.realpath(__file__))
         self.tradingPairs           = []
-        self.tradingCoins           = []
+        self.tradingAssets          = []
         self.kLinesData             = {}
         self.kLinesTA               = {}
         self.methods                = {}
@@ -26,9 +26,9 @@ class TradingBot():
         logger.info("starting bot")
         
         """ Run initialization methods """
-        BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
-        TradingBot.getTradingPairsAndCoins(self)                        # Get the target trading pairs to trade
-        TradingBot.loadMethodsJSON(self)                                # Load the current methods
+        self.client = BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
+        TradingBot.getTradingPairsAndAssets(self)                                     # Get the target trading pairs to trade
+        TradingBot.loadMethodsJSON(self)                                              # Load the current methods
         #TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
         #KlineData.saveHistoricalData(self, self.tradingPairs)
         TradingBot.test(self)
@@ -53,14 +53,14 @@ class TradingBot():
         except Exception as e:
             logger.warning(f"Failed to save methods, error: {e}")             
         
-    def getTradingPairsAndCoins(self):
+    def getTradingPairsAndAssets(self):
         # Get list of target trading pairs
         with open(self.tradePairsFileName, "r") as file:
             data                = file.read()
             self.tradingPairs   = json.loads(data)["pairs"]
-            self.tradingCoins   = json.loads(data)["coins"]
+            self.tradingCoins   = json.loads(data)["assets"]
             logger.info(f"Loaded target trading pairs: {', '.join(self.tradingPairs)}")
-            logger.info(f"Loaded coins: {', '.join(self.tradingCoins)}")
+            logger.info(f"Loaded assets: {', '.join(self.tradingAssets)}")
     
     def backtestMethods(self, pairs, methods=['RSI']):
         # Get historical data for trading pairs given parameters below:
@@ -100,21 +100,15 @@ class TradingBot():
         #BinanceConnect.getAssetDetails(self)       # error
         #BinanceConnect.getWithdrawHistory(self, coin='ADA')
         #BinanceConnect.getAssetBalance(self, asset='VET')
-        # BinanceConnect.placeTestOrder(self, 
-        #                               pair='ETHUSDC', 
-        #                               side=Client.SIDE_BUY, 
-        #                               orderType=Client.ORDER_TYPE_LIMIT, 
-        #                               timeInForce=TIME_IN_FORCE_GTC, 
-        #                               quantity='0.01', 
-        #                               price='1000.00')
-         
-        self.client.create_order(symbol='VETUSDT', 
-                                      side=Client.SIDE_SELL, 
-                                      type=Client.ORDER_TYPE_LIMIT, 
+        #BinanceConnect.getAccountTradingStatus(self)    # error
+        lot = BinanceConnect.calcMinLotParamsAtMarketPrice(self, pair='VETUSD', minLotPrice=10.1)
+        BinanceConnect.placeTestOrder(self, 
+                                      pair=lot['symbol'], 
+                                      side=Client.SIDE_BUY, 
+                                      orderType=Client.ORDER_TYPE_MARKET, 
                                       timeInForce=TIME_IN_FORCE_GTC, 
-                                      quantity='1', 
-                                      price='0.090')
-        
+                                      quantity=lot['qty'], 
+                                      price=lot['price'])
         
 
     def updateAccountReport(self):

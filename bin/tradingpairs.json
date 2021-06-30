@@ -1,11 +1,12 @@
 {
     "pairs": [
-        "ETHUSDC",
-        "BTCUSDC",
-        "LTCUSDC",
-        "BNBUSDC"
+        "ETHUSD",
+        "BTCUSD",
+        "LTCUSD",
+        "BNBUSD"
     ],
-    "coins": [
+    "assets": [
+        "USD",
         "ETH",
         "BTC",
         "LTC",
