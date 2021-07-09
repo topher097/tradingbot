@@ -3,8 +3,11 @@ import numpy as np
 from loggerSettings import logger
 from BinanceConnect import *
 import tensorflow as tf
+from bot import *
+from Technical import *
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
+
 logger.debug('Tensorflow version: {}'.format(tf.__version__))
 
 import matplotlib.pyplot as plt
@@ -13,10 +16,13 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # https://towardsdatascience.com/the-beginning-of-a-deep-learning-trading-bot-part1-95-accuracy-is-not-enough-c338abc98fc2
+# https://github.com/JanSchm/CapMarket/blob/master/bot_experiments/IBM_PriceFeatures.ipynb
 
-class Training():
+class TrainingMisc():
     def __init__(self):
-        self.BiDirectionalLSTM = BiDirectionalLSTM()
+        #self.BiDirectionalLSTM  = BiDirectionalLSTM()
+        self.methodFileName     = bot.methodFileName
+        self.methods            = {}
 
     def calcPercentChange(self, klines):
         try:
@@ -30,12 +36,37 @@ class Training():
         except Exception as e:
             logger.error(e)
 
-    def preprocessData(self, klines):
+    def loadMethodsJSON(self):
+        # Load the methods and their values from JSON file
         try:
+            with open(self.methodFileName, "r") as file:
+                data            = file.read()
+                self.methods    = json.loads(data)
+            logger.info(f"Successfully loaded methods from {self.methodFileName}")
+        except Exception as e:
+            logger.error(f"Failed to load methods, error: {e}")
+
+    def preprocessData(self, klines, pair, methods, plot=True):
+        try:
+            # Get the useful data from klines
+            updatedKlines = klines[:,0:6]
+            columnTitles = ["openTime", "open", "high", "low", "close", "volume"]
             # Create pandas data frame given kline data
-            df = pd.DataFrame(klines[:,0:6], columns = ["openTime", "open", "high", "low", "close", "volume"])
-            df['volume'].replace(to_replace=0, method='ffill', inplace=True)
-            df.sort_values('openTime', inplace=True)
+            df = pd.DataFrame(updatedKlines, columns=columnTitles)
+
+            """ add indicator(s) from methods to data frame """
+            # Get RSI
+            if 'RSI' in methods:   
+                df['RSI']   = Technical.getRSI(self, klines, type=methods['RSI']['type'], timePeriod=methods['RSI']['timePeriod']).tolist()
+            # Get Parabolic SAR
+            if 'PSAR' in methods:   
+                df['PSAR']  = Technical.getParabolicSAR(self, klines, acceleration=methods['PSAR']['acceleration'], maximum=methods['PSAR']['maximum']).tolist()
+                df['PSAR']  = df['PSAR']/df['open']     # Get if PSAR is above or below open (above is >1, below is <1)      
+            """ done with adding indicators """
+
+            # Normalize and clean kline data
+            df['volume'].replace(to_replace=0, method='ffill', inplace=True)        # Fix volume data
+            df.sort_values('openTime', inplace=True)                                # Sort by ascending openTime
             # Percent change
             df['open']      = df['open'].pct_change()
             df['high']      = df['high'].pct_change()
@@ -53,6 +84,7 @@ class Training():
             min_volume      = df['volume'].min(axis=0)
             max_volume      = df['volume'].max(axis=0)
             df['volume']    = (df['volume'] - min_volume) / (max_volume - min_volume)
+            
             # Split into training periods
             times           = sorted(df.index.values)
             last_10pct      = sorted(df.index.values)[-int(0.1*len(times))]     # Last 10% of series
@@ -68,17 +100,18 @@ class Training():
             train_data      = df_train.values
             val_data        = df_val.values
             test_data       = df_test.values
-            print('Training data shape: {}'.format(train_data.shape))
-            print('Validation data shape: {}'.format(val_data.shape))
-            print('Test data shape: {}'.format(test_data.shape))
-            Training.plotDailyChangesOfClosePricesAndVolume(self, df_train, train_data, df_val, val_data, df_test, test_data)
+            logger.info('Training data shape: {}'.format(train_data.shape))
+            logger.info('Validation data shape: {}'.format(val_data.shape))
+            logger.info('Test data shape: {}'.format(test_data.shape))
+            
+            if plot: TrainingMisc.plotDailyChangesOfClosePricesAndVolume(self, pair, df_train, train_data, df_val, val_data, df_test, test_data)
             return df_train, train_data, df_val, val_data, df_test, test_data
         except Exception as e:
             logger.error(e)
 
-    def plotDailyChangesOfClosePricesAndVolume(self, df_train, train_data, df_val, val_data, df_test, test_data):
+    def plotDailyChangesOfClosePricesAndVolume(self, pair, df_train, train_data, df_val, val_data, df_test, test_data):
         fig = plt.figure(figsize=(15,10))
-        st  = fig.suptitle("Data Separation", fontsize=20)
+        st  = fig.suptitle(f"Data Separation for {pair}", fontsize=20)
         st.set_y(0.92)
 
         ax1 = fig.add_subplot(211)
@@ -102,37 +135,112 @@ class Training():
     def calcSharpeRatio(self):
         pass
 
+
     
 
 class BiDirectionalLSTM():
-    def __init__(self):
+    def __init__(self, train_data, val_data, test_data, modelFilePath, pair, plotEval):
         self.X_train, self.y_train  = [], []
         self.X_val, self.y_val      = [], []
         self.X_test, self.y_test    = [], []
-        self.train_data = Training.train_data
-        self.val_data   = Training.val_data
-        self.test_data  = Training.test_data
-        self.seq_len    = Training.seq_len
+        self.train_data = test_data
+        self.val_data   = val_data
+        self.test_data  = train_data
+        self.modelFilePath = modelFilePath
+        self.plotEval   = plotEval
+        self.pair       = pair
+        self.seq_len    = 128
+
+        # gpus = tf.config.list_physical_devices('GPU')
+        # if gpus:
+        #     try:
+        #         # Currently, memory growth needs to be the same across GPUs
+        #         for gpu in gpus:
+        #             tf.config.experimental.set_memory_growth(gpu, True)
+        #             logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+        #             print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+        #             #print(tf.config.experimental.get_memory_info(gpu))
+        #     except RuntimeError as e:
+        #         # Memory growth must be set before GPUs have been initialized
+        #         print(e)
+        BiDirectionalLSTM.initChunks(self)
+        BiDirectionalLSTM.runBiDirectionalLSTM(self)
 
     def runBiDirectionalLSTM(self):
-        # Get the model
-        model = BiDirectionalLSTM.create_model(self)
-        logger.debug(model.summary())
-        callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
-        callback = tf.keras.callbacks.ModelCheckpoint('Bi-LSTM.hdf5', monitor='val_loss', save_best_only=True, verbose=1)
-        model.fit(self.X_train, self.y_train,
-                  batch_size=2048,
-                  verbose=2,
-                  callbacks=[callback],
-                  epochs=200,
-                  #shuffle=True,
-                  validation_data=(self.X_val, self.y_val),)    
-        model = tf.keras.models.load_model('/content/Bi-LSTM.hdf5')
+        # Get or create and run the model
+        if not os.path.exists(self.modelFilePath):
+            logger.debug(f"New model file requested, running model training for: {self.modelFilePath}")
+            try:
+                logger.debug("Creating model")
+                model = BiDirectionalLSTM.create_model(self)
+                logger.debug(model.summary())
+                callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
+                callback = tf.keras.callbacks.ModelCheckpoint(self.modelFilePath, monitor='val_loss', save_best_only=True, verbose=1)
+                model.fit(self.X_train, self.y_train,
+                        batch_size=1024,
+                        verbose=1,
+                        callbacks=[callback],
+                        epochs=200,
+                        #shuffle=True,
+                        validation_data=(self.X_val, self.y_val))  
+                model = tf.keras.models.load_model(self.modelFilePath)
+            except Exception as e:
+                logger.error(f"Error while creating model, error: {e}")
+        else:
+            logger.debug(f"Model file already exists, loading file: {self.modelFilePath}")
+            model = tf.keras.models.load_model(self.modelFilePath)
 
+        logger.debug("Evaluating the model performance")
+        print(model)
+        
         """ Calc predictions and metrics """
-        # Calculate the predication for training, validation and test data
+        # Calculate the prediction for training, validation and test data
+        train_predict   = model.predict(self.X_train)
+        val_predict     = model.predict(self.X_val)
+        test_predict    = model.predict(self.X_test)
+        logger.debug("Prediction using data and model finished")
 
+        # # Log evaluation metrics for all of the datasets
+        # train_evaluate  = model.evaluate(self.X_train, self.y_train, batch_size=128, verbose=0)
+        # val_evaluate    = model.evaluate(self.X_val, self.y_val, batch_size=128, verbose=0)
+        # test_evaluate   = model.evaluate(self.X_test, self.X_test, batch_size=128, verbose=0)
+        # logger.info('Training Data - Loss: {:.4f}, MAE: {:.4f}, MAPE: {:.4f}'.format(train_evaluate[0], train_evaluate[1], train_evaluate[2]))
+        # logger.info('Validation Data - Loss: {:.4f}, MAE: {:.4f}, MAPE: {:.4f}'.format(val_evaluate[0], val_evaluate[1], val_evaluate[2]))
+        # logger.info('Test Data - Loss: {:.4f}, MAE: {:.4f}, MAPE: {:.4f}'.format(test_evaluate[0], test_evaluate[1], test_evaluate[2]))
 
+        """ Plot the results """
+        if self.plotEval:
+            fig = plt.figure(figsize=(15,15))
+            st  = fig.suptitle(f"Bi-Directional LSTM Model for {self.pair}", fontsize=18)
+            st.set_y(1.02)
+            
+            # Plot the training data and results
+            ax11 = fig.add_subplot(311)
+            ax11.plot(self.train_data[:, 3], label="Closing returns")
+            ax11.plot(train_predict, color="yellow", linewidth=3, label="Predicted Closing Returns")
+            ax11.set_title("Training Data", fontsize=16)
+            ax11.set_xlabel("Open Time")
+            ax11.set_ylabel("Closing Returns")
+
+            # Plot the validation data and results
+            ax21 = fig.add_subplot(312)
+            ax21.plot(self.val_data[:, 3], label="Closing returns")
+            ax21.plot(val_predict, color="yellow", linewidth=3, label="Predicted Closing Returns")
+            ax21.set_title("Validation Data", fontsize=16)
+            ax21.set_xlabel("Open Time")
+            ax21.set_ylabel("Closing Returns")
+
+            # Plot the test data and results
+            ax21 = fig.add_subplot(313)
+            ax21.plot(self.test_data[:, 3], label="Closing returns")
+            ax21.plot(test_predict, color="yellow", linewidth=3, label="Predicted Closing Returns")
+            ax21.set_title("Test Data", fontsize=16)
+            ax21.set_xlabel("Open Time")
+            ax21.set_ylabel("Closing Returns")
+
+            plt.tight_layout()
+            plt.legend(loc='best')
+            plt.draw()
 
 
     def initChunks(self):
@@ -141,7 +249,8 @@ class BiDirectionalLSTM():
         for i in range(self.seq_len, len(self.train_data)):
             X_train.append(self.train_data[i-self.seq_len:i])      # Chunks of training data with a length of seq_len df-rows
             y_train.append(self.train_data[:, 3][i])               # Value of the 4th column (close price) of df-row seq_len+1
-        self.X_train, self.y_train = np.array(X_train), np.array(y_train)
+        self.X_train = np.array(X_train)
+        self.y_train = np.array(y_train)
 
         # Validation data
         X_val, y_val = [], []
@@ -156,10 +265,10 @@ class BiDirectionalLSTM():
             X_test.append(self.test_data[i-self.seq_len:i])
             y_test.append(self.test_data[:, 3][i])
         self.X_test, self.y_test = np.array(X_test), np.array(y_test)
+        logger.debug("Initialized chunks")
 
     def create_model(self):
-        BiDirectionalLSTM.initChunks(self)
-        in_seq = Input(shape = (self.seq_len, 5))
+        in_seq = Input(shape = (self.seq_len, self.test_data.shape[1]))
         x = Bidirectional(LSTM(128, return_sequences=True))(in_seq)
         x = Bidirectional(LSTM(128, return_sequences=True))(x)
         x = Bidirectional(LSTM(64, return_sequences=True))(x) 
@@ -172,6 +281,7 @@ class BiDirectionalLSTM():
 
         model = Model(inputs=in_seq, outputs=out)
         model.compile(loss="mse", optimizer="adam", metrics=['mae', 'mape'])    
+        logger.debug("Created model")
         return model
 
 

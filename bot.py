@@ -1,7 +1,10 @@
 from BinanceConnect import *
 from KlineData import *
-#from Technical import *
-from Training import *
+from Technical import *
+import Training
+import tensorflow as tf
+from tensorflow.keras.models import *
+from tensorflow.keras.layers import *
 import json
 import os
 from loggerSettings import logger
@@ -16,6 +19,8 @@ class TradingBot():
         self.tradePairsFileName     = "bin/tradingpairs.json"
         self.availPairsFileName     = "bin/availabletradingpairs.json"
         self.accountReportFileName  = "bin/accountReport.json"
+        self.histCSVDir             = "historical_data_csv"
+        self.histPklDir             = "historical_data"
         self.BASEDIR                = os.path.dirname(os.path.realpath(__file__))
         self.tradingPairs           = []
         self.tradingAssets          = []
@@ -66,7 +71,7 @@ class TradingBot():
     def backtestMethods(self, pairs, methods=['RSI']):
         # Get historical data for trading pairs given parameters below:
         timeInterval    = '1h'
-        start           = 'Jan 1, 2021'
+        start           = 'Jan 1, 2017'
         stop            = 'Jun 1, 2021'
         # Iterate through pairs data
         for pair in pairs:
@@ -75,19 +80,26 @@ class TradingBot():
             if not kLines.any():
                 logger.warning(f"kLine data empty, going to next pair...")
                 break
-            self.kLinesData[pair] = kLines
-            self.kLinesTA[pair] = {}
-            # Get RSI of historical data
-            #if 'RSI' in methods:     self.kLinesTA[pair]['RSI'] = Technical.getRSI(self, kLines, type=self.methods['RSI']['type'], timePeriod=self.methods['RSI']['timePeriod'])
-            #else:                    self.kLinesTA[pair]['RSI'] = []
-            # Get Parabolic SAR of historical data
-            #if 'PSAR' in methods:    self.kLinesTA[pair]['PSAR'] = Technical.getParabolicSAR(self, kLines, acceleration=self.methods['PSAR']['acceleration'], maximum=self.methods['PSAR']['maximum'])
-            #else:                    self.kLinesTA[pair]['PSAR'] = []
-            
-            Training.preprocessData(self, klines=kLines)
-            plt.show()            
+            else:
+                logger.info(f"Finished loading kLine data for pair: {pair} given paramaters time interval: {timeInterval}, start: {start}, and stop: {stop}")
+            # Create model file name
+            methodStrings = ""
+            if 'RSI' in methods: methodStrings += f"_RSI_{methods['RSI']['type']}_{methods['RSI']['timePeriod']}"
+            if 'PSAR' in methods: methodStrings += f"_PSAR_{methods['PSAR']['acceleration']}_{methods['PSAR']['maximum']}"
 
-        logger.info(f"Finished loading kLine data for pairs: [{', '.join(pairs)}] given paramaters time interval: {timeInterval}, start: {start}, and stop: {stop}")
+            modelFileName = f"models\BiLSTM\{pair}\{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}{methodStrings}.hdf5"
+            modelFilePath = os.path.join(self.BASEDIR, modelFileName)
+            # Run or get model from file
+            try:
+                df_train, train_data, df_val, val_data, df_test, test_data = Training.TrainingMisc.preprocessData(self, klines=kLines, pair=pair, methods=methods, plot=False)
+                Training.BiDirectionalLSTM(train_data, val_data, test_data, modelFilePath, pair, plotEval=True)
+            except Exception as e:
+                logger.error(f"Error while training model, error: {e}")
+        
+        # Show all plots
+        plt.show()            
+
+        
     
     def plotKlineData(self, kLines):
         pass
@@ -105,6 +117,22 @@ class TradingBot():
                                       quantity=lot['qty'], 
                                       price=lot['price'])
         
+    def deleteHistoricalData(self):
+        # Delete pickle files
+        dirPath = os.path.join(self.BASEDIR,self.histCSVDir)
+        keep = "01012017"
+        print(dirPath)
+        print(os.listdir(dirPath))
+        for file in os.listdir(dirPath):
+            if keep not in file:
+                filePath = os.path.join(dirPath, file)
+                try:
+                    if os.path.isfile(filePath):
+                        os.remove(filePath)
+                    else:
+                        raise Exception("file doesn't exist")
+                except Exception as e:
+                    print(f"cannot delete {filePath}, reason: {e}")
 
     def updateAccountReport(self):
         with open(self.accountReportFileName, 'r+') as file:

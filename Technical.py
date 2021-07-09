@@ -26,7 +26,7 @@ class Technical():
                 d = klines[:,4]
             else:
                 raise Exception('Illegal type for SMA')
-            return talib.SMA(d, timePeriod=timePeriod)
+            return talib.SMA(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
@@ -38,7 +38,7 @@ class Technical():
                 d = klines[:,4]
             else:
                 raise Exception('Illegal type for EMA')
-            return talib.EMA(d, timePeriod=timePeriod)
+            return talib.EMA(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
@@ -50,7 +50,7 @@ class Technical():
                 d = klines[:,4]
             else:
                 raise Exception('Illegal type for MA')
-            return talib.MA(d, timePeriod=timePeriod)
+            return talib.MA(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
@@ -62,7 +62,7 @@ class Technical():
                 d = klines[:,4]
             else:
                 raise Exception('Illegal type for Bollinger Bands')
-            upperBand, middleBand, lowerBand = talib.BBANDS(d, timePeriod=timePeriod, nbdevup=stdevup, nbdevdn=stdevdown, matype=0)
+            upperBand, middleBand, lowerBand = talib.BBANDS(d, timeperiod=timePeriod, nbdevup=stdevup, nbdevdn=stdevdown, matype=0)
             return upperBand, middleBand, lowerBand
         except Exception as e:
             logger.error(e)
@@ -76,7 +76,7 @@ class Technical():
                 d = klines[:,4]
             else:
                 raise Exception('Illegal type for RSI')
-            return talib.RSI(d, timePeriod=timePeriod)
+            return talib.RSI(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
@@ -104,7 +104,7 @@ class Technical():
             high    = klines[:,2]
             low     = klines[:,3]
             volume  = klines[:,5]
-            return talib.MFI(high, low, d, volume, timePeriod=timePeriod)
+            return talib.MFI(high, low, d, volume, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
@@ -116,6 +116,6 @@ class Technical():
                 d = klines[:,4]
             else:
                 raise Exception('Illegal type for MOM')
-            return talib.MOM(d, timePeriod=timePeriod)
+            return talib.MOM(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
