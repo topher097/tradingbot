@@ -35,7 +35,8 @@ class TradingBot():
         self.client = BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
         TradingBot.getTradingPairsAndAssets(self)                                     # Get the target trading pairs to trade
         TradingBot.loadMethodsJSON(self)                                              # Load the current methods
-        TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
+        TradingBot.backtestMethods(self, pairs=self.tradingPairs, methods=self.methods)
+        #TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
         #KlineData.saveHistoricalData(self, self.tradingPairs)
         #TradingBot.test(self)
         #TradingBot.backtestMethods(self, pairs=self.tradingPairs)
@@ -87,7 +88,8 @@ class TradingBot():
             if 'RSI' in methods: methodStrings += f"_RSI_{methods['RSI']['type']}_{methods['RSI']['timePeriod']}"
             if 'PSAR' in methods: methodStrings += f"_PSAR_{methods['PSAR']['acceleration']}_{methods['PSAR']['maximum']}"
 
-            modelFileName = f"models\BiLSTM\{pair}\{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}{methodStrings}.hdf5"
+            #modelFileName = f"models\BiLSTM\{pair}\{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}{methodStrings}.hdf5"
+            modelFileName = f"models\BiLSTM\{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}{methodStrings}.hdf5"
             modelFilePath = os.path.join(self.BASEDIR, modelFileName)
             # Run or get model from file
             try:

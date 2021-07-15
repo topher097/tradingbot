@@ -173,27 +173,30 @@ class BiDirectionalLSTM():
             try:
                 logger.debug("Creating model")
                 model = BiDirectionalLSTM.create_model(self)
-                logger.debug(model.summary())
-                callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
-                callback = tf.keras.callbacks.ModelCheckpoint(self.modelFilePath, monitor='val_loss', save_best_only=True, verbose=1)
-                model.fit(self.X_train, self.y_train,
-                        batch_size=1024,
-                        verbose=1,
-                        callbacks=[callback],
-                        epochs=200,
-                        #shuffle=True,
-                        validation_data=(self.X_val, self.y_val))  
-                model = tf.keras.models.load_model(self.modelFilePath)
             except Exception as e:
                 logger.error(f"Error while creating model, error: {e}")
-        else:
+        else: 
             logger.debug(f"Model file already exists, loading file: {self.modelFilePath}")
             model = tf.keras.models.load_model(self.modelFilePath)
 
-        logger.debug("Evaluating the model performance")
-        print(model)
+        try:
+            logger.debug("Fitting model")
+            #logger.debug(model.summary())
+            callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
+            callback = tf.keras.callbacks.ModelCheckpoint(self.modelFilePath, monitor='val_loss', save_best_only=True, verbose=1)
+            model.fit(self.X_train, self.y_train,
+                    batch_size=1024,
+                    verbose=1,
+                    callbacks=[callback],
+                    epochs=10,
+                    #shuffle=True,
+                    validation_data=(self.X_val, self.y_val))  
+            model = tf.keras.models.load_model(self.modelFilePath)
+        except Exception as e:
+            logger.error(f"Error while fitting model, error: {e}")
         
         """ Calc predictions and metrics """
+        logger.debug("Evaluating the model performance")
         # Calculate the prediction for training, validation and test data
         train_predict   = model.predict(self.X_train)
         val_predict     = model.predict(self.X_val)
