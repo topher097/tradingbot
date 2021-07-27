@@ -1,12 +1,18 @@
 import investpy
+from get_all_tickers import get_tickers as gt
 import pandas as pd
 import pickle
 from bs4 import BeautifulSoup
 import csv
 import os
-from os import mkdir
-from os.path import exists, join
+import sys
 import urllib.request as request
+from collections import OrderedDict
+
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(os.path.join(parentdir, 'src'))
+import chime
 
 """
 Get list of stock tickers
@@ -39,20 +45,13 @@ def extract():
             # fix as now they have links to the companies on WP
             name = fields[1].text.replace(",", "")
             sector = fields[3].text.rstrip()
-            records.append([symbol, name, sector])
+            records.append((symbol, name, sector))
             symbols.append(symbol + "\n")
 
-    header = ["Symbol", "Name", "Sector"]
-    writer = csv.writer(open(dataPathCSV, "w"), lineterminator="\n")
-    writer.writerow(header)
-    # Sorting ensure easy tracking of modifications
-    records.sort(key=lambda s: s[1].lower())
-    writer.writerows(records)
+    header = ["symbol", "name", "sector"]
+    df = pd.DataFrame(records, columns=header)
+    df.to_csv(dataPathCSV)
 
-    with open(dataPathTXT, "w") as f:
-        # Sorting ensure easy tracking of modifications
-        symbols.sort(key=lambda s: s[0].lower())
-        f.writelines(symbols)
 
 def getCSV():
     retrieve()
@@ -65,12 +64,11 @@ def getCSV():
 def getTickers():
     with open(dataPathCSV, 'r') as file:
         df = pd.read_csv(file)
-    tickers = df['Symbol'].tolist()
+    tickers = df['symbol'].tolist()
     tickers = [ticker.upper().replace(".", "") for ticker in tickers]
     return tickers
 
-def getHistoricalData(tickers):
-    candleDataDir = "E:\MarketData\STOCK"
+def getHistoricalData(tickers, chime_=False):
     total = len(tickers)
     count = 0
     for ticker in tickers:
@@ -100,13 +98,15 @@ def getHistoricalData(tickers):
                 print(f"{count}/{total}   Data for ticker '{ticker}' already exists, skipping")
         except Exception as e:
             print(f"Error with ticker '{ticker}, error: {e}'")
-
+    print(f"Done saving data for S&P500")
+    if chime_:
+        chime.play_tone(freq=1000, bursts=5, burst_time=0.1)
 
 
 if __name__ == "__main__":
+    """ S&P500 tickers """
     datadir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'bin'))
-    dataPathCSV = os.path.join(datadir, 'stockTickers.csv')
-    dataPathTXT = os.path.join(datadir, 'stockTickers.txt')
+    dataPathCSV = os.path.join(datadir, 'sp500Tickers.csv')
 
     if not os.path.isdir("scripts/tmp"):
         os.makedirs("scripts/tmp")
@@ -119,7 +119,19 @@ if __name__ == "__main__":
     # Get list of tickers from csv file
     tickers = getTickers()
     # Get historical data for tickers
-    getHistoricalData(tickers)
+    candleDataDir = "E:\MarketData\STOCK\SP500"
+    #getHistoricalData(tickers, chime_=False)
+
+    """ TOP 2500 TICKERS """
+    tickers = gt.get_biggest_n_tickers(10000)
+    tickers = list(OrderedDict.fromkeys(tickers))[0:2500]    # Remove duplicates, get top 2500
+    # Save dataframe of tickers in order
+    dataPathCSV = os.path.join(datadir, 'top2500Tickers.csv')
+    df = pd.DataFrame(tickers, columns=['symbol'])
+    df.to_csv(dataPathCSV)
+    candleDataDir = "E:\MarketData\STOCK\TOP2500"
+    #getHistoricalData(tickers, chime_=True)
+    
 
 
 
