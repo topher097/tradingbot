@@ -10,6 +10,7 @@ import os
 from loggerSettings import logger
 from datetime import datetime
 import matplotlib.pyplot as plt
+import chime
 
 
 class TradingBot():
@@ -34,8 +35,8 @@ class TradingBot():
         """ Run initialization methods """
         self.client = BinanceConnect.createClient(self, self.credentialsFileName)     # Connect to binance via API
         TradingBot.getTradingPairsAndAssets(self)                                     # Get the target trading pairs to trade
-        TradingBot.loadMethodsJSON(self)                                              # Load the current methods
-        TradingBot.backtestMethods(self, pairs=self.tradingPairs, methods=self.methods)
+        #TradingBot.loadMethodsJSON(self)                                              # Load the current methods
+        #TradingBot.backtestMethods(self, pairs=self.tradingPairs, methods=self.methods)
         #TradingBot.backtestMethods(self, pairs=['ETHUSDC'], methods=self.methods)
         #KlineData.saveHistoricalData(self, self.tradingPairs)
         #TradingBot.test(self)
@@ -85,8 +86,9 @@ class TradingBot():
                 logger.info(f"Finished loading kLine data for pair: {pair} given paramaters time interval: {timeInterval}, start: {start}, and stop: {stop}")
             # Create model file name
             methodStrings = ""
-            if 'RSI' in methods: methodStrings += f"_RSI_{methods['RSI']['type']}_{methods['RSI']['timePeriod']}"
-            if 'PSAR' in methods: methodStrings += f"_PSAR_{methods['PSAR']['acceleration']}_{methods['PSAR']['maximum']}"
+            for method in methods:
+                if 'RSI' == method: methodStrings += f"_RSI_{methods['RSI']['type']}_{methods['RSI']['timePeriod']}"
+                if 'PSAR' == method: methodStrings += f"_PSAR_{methods['PSAR']['acceleration']}_{methods['PSAR']['maximum']}"
 
             #modelFileName = f"models\BiLSTM\{pair}\{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}{methodStrings}.hdf5"
             modelFileName = f"models\BiLSTM\{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}{methodStrings}.hdf5"
@@ -118,23 +120,6 @@ class TradingBot():
                                       timeInForce=TIME_IN_FORCE_GTC, 
                                       quantity=lot['qty'], 
                                       price=lot['price'])
-        
-    def deleteHistoricalData(self):
-        # Delete pickle files
-        dirPath = os.path.join(self.BASEDIR,self.histCSVDir)
-        keep = "01012017"
-        print(dirPath)
-        print(os.listdir(dirPath))
-        for file in os.listdir(dirPath):
-            if keep not in file:
-                filePath = os.path.join(dirPath, file)
-                try:
-                    if os.path.isfile(filePath):
-                        os.remove(filePath)
-                    else:
-                        raise Exception("file doesn't exist")
-                except Exception as e:
-                    print(f"cannot delete {filePath}, reason: {e}")
 
     def updateAccountReport(self):
         with open(self.accountReportFileName, 'r+') as file:
@@ -144,20 +129,7 @@ class TradingBot():
             newEntry = {str(datetime.strftime("%s")) : {"USD Bal" : BinanceConnect.getAssetBalance(asset='USD')}}
             fileData.update(newEntry)
             file.seek(0)
-            json.dump(fileData, file)
-
-
-    def createLegalPairsJSON(self):
-        prices = BinanceConnect.getAllPrices(self)
-        pairs = []
-        for data in prices:
-            pairs.append(data["symbol"])
-        filedata = {}
-        filedata["pairs"] = pairs
-        jstr = json.dumps(filedata, indent=4)
-        with open(self.availPairsFileName, "w") as file:
-            file.write(jstr)
-                
+            json.dump(fileData, file)                
 
 
 if __name__ == "__main__":

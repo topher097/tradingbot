@@ -5,16 +5,17 @@ import pickle
 import os
 import csv
 from loggerSettings import logger
+import chime
 
 class KlineData():
     def __init__(self):
         pass
 
     def getPickleFileName(self, pair, timeInterval, start, stop):
-        return f"historical_data\\{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}.pkl"
+        return f"pickle//{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}.pkl"
 
     def getCSVFileName(self, pair, timeInterval, start, stop):
-        return f"historical_data_csv\\{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}.csv"
+        return f"csv//{pair}_{timeInterval}_{datetime.strptime(start, '%b %d, %Y').strftime('%m%d%Y')}_{datetime.strptime(stop, '%b %d, %Y').strftime('%m%d%Y')}.csv"
 
     def fetchHistoricalData(self, pair, timeInterval='30m', start='Jan 1, 2018', stop=datetime.utcnow().strftime('%b %d, %Y')):
         logger.debug(f"Pulling kline data for {pair} with interval of {timeInterval}, starting {start} and ending {stop}...")
@@ -28,16 +29,17 @@ class KlineData():
             logger.error(f"Failed retrieving current kLine data for {pair} with time interval of {timeInterval}")
 
     def saveHistoricalData(self, pairs):
-        timeIntervals = ['1d', '4h', '2h', '1h', '30m', '5m', '1m']
-        startDays = ['Jan 1, 2017', 'Jan 1, 2018', 'Jan 1, 2019', 'Jan 1, 2020', 'Jan 1, 2021']
-        stop = 'Jun 1, 2021'
+        timeIntervals = ['1m']
+        startDays = ['Jan 1, 2010']
+        stop = 'Jul 1, 2021'
+        dataDir = "E:\MarketData\CRYPTO\BINANCE"
         for pair in pairs:
             for timeInterval in timeIntervals:
                 for start in startDays:
                     try:
                         # First pickle data/file
                         fileName = KlineData.getPickleFileName(self, pair, timeInterval, start, stop)
-                        filePath = os.path.join(self.BASEDIR,fileName)
+                        filePath = os.path.join(dataDir,fileName)
                         if not os.path.exists(filePath):
                             kLines = KlineData.fetchHistoricalData(self, pair, timeInterval, start, stop)
                             with open(filePath, 'wb') as f:
@@ -48,7 +50,7 @@ class KlineData():
                         
                         # Second CSV data/file
                         fileNameCSV = KlineData.getCSVFileName(self, pair, timeInterval, start, stop)
-                        filePathCSV = os.path.join(self.BASEDIR,fileNameCSV)
+                        filePathCSV = os.path.join(dataDir,fileNameCSV)
                         if not os.path.exists(filePathCSV):
                             with open(filePath, 'rb') as f:
                                 kLines = pickle.load(f)
@@ -59,7 +61,8 @@ class KlineData():
                         else:
                             logger.debug(f"csv file: {fileNameCSV} already exists")
                     except Exception as e:
-                        logger.error(f"failed to save kline data, error: {e}")
+                        logger.error(f"failed to save kline data for {pair}, error: {e}")
+            chime.play_tone(freq=1000, bursts=3, burst_time=0.1)
 
     def loadHistoricalPickleData(self, pair, timeInterval, start, stop):
         try:

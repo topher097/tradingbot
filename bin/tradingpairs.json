@@ -1,15 +1,32 @@
 {
     "pairs": [
-        "ETHUSDC",
-        "BTCUSDC",
-        "LTCUSDC",
-        "BNBUSDC"
+        "ETHUSDT",
+        "BTCUSDT",
+        "LTCUSDT",
+        "BNBUSDT",
+        "XRPUSDT",
+        "XLMUSDT",
+        "ADAUSDT",
+        "NEOUSDT",
+        "ATOMUSDT",
+        "BATUSDT",
+        "DOGEUSDT",
+        "BCHUSDT"
+
     ],
     "assets": [
         "USD",
         "ETH",
         "BTC",
         "LTC",
-        "BNB"
+        "BNB",
+        "XRP",
+        "XLM",
+        "ADA",
+        "NEO",
+        "ATOM",
+        "BAT",
+        "DOGE",
+        "BCH"
     ]
 }
