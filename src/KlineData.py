@@ -1,3 +1,4 @@
+import time
 from numpy.lib.npyio import genfromtxt
 from BinanceConnect import *
 from datetime import datetime
@@ -6,6 +7,8 @@ import os
 import csv
 from loggerSettings import logger
 import chime
+import pandas as pd
+import numpy as np
 
 class KlineData():
     def __init__(self):
@@ -106,5 +109,109 @@ class KlineData():
         except Exception as e:
             logger.error(f"Unable to fetch kLine historical CSV data for {pair} due to error: {e}")
 
+    def BinanceCSVtoDataframe(self, filename=None):
+        """
+        Load binance CSV file and 
+        """
+        try:
+            if filename:
+                if os.path.isfile(filename):
+                    df = pd.read_csv(filename)
+                    df = df.iloc[:, :-6]                                                # Drop last 6 columns
+                    df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']     # Set column names
+                    df['date'] = pd.to_datetime(df['date'],unit='ms')                    # Convert unix to date time
+                    df.set_index('date')                                                # Set the date as the index column
+                    return df
+                else:
+                    raise Exception(f'No file: {filename}')
+            else:
+                raise Exception("No filename entered")
+        except Exception as e:
+            logger.error(e)
 
+    def calculateHeikenAshi(self, klines):
+        """
+        Take ohlc kline data and calcuate the heiken ashi candles for data and return updated dataframe
+        """
+        df = klines
+        df['ha_close']=(df['open']+ df['high']+ df['low']+df['close'])/4
+        idx = df.index.name
+        df.reset_index(inplace=True)
+        for i in range(0, len(df)):
+            if i == 0:
+                df.set_value(i, 'ha_open', ((df.get_value(i, 'open') + df.get_value(i, 'close')) / 2))
+            else:
+                df.set_value(i, 'ha_open', ((df.get_value(i - 1, 'ha_open') + df.get_value(i - 1, 'ha_close')) / 2))
+        if idx:
+            df.set_index(idx, inplace=True)
+        df['ha_high']=df[['ha_open','ha_close','high']].max(axis=1)
+        df['ha_low']=df[['ha_open','ha_close','low']].min(axis=1)
+        
+        return df   # Dataframe with both OHLC and HA candle data
+
+def aggregateKlines(pair, timeframe, timeframeText):
+    dirPath = "F:\MarketData\CRYPTO\pickle"
+    newFileName = f"{pair}_{timeframeText}.pkl"
+    minDataFilename = f"{pair}_1m.pkl"
+    newFilePath = os.path.join(dirPath, newFileName)
+    minFilePath = os.path.join(dirPath, minDataFilename)
+    # Load minute data
+    with open(minFilePath, 'rb') as f:
+        df = pickle.load(f)
+    df.dropna(how='any', axis=0, inplace=True)      # Drop all rows with NaN values
+    #print(df.head())
+    # Aggregate data given timeframe
+    df['volume'] = pd.to_numeric(df['volume'], downcast="float")
+    ohlc = {'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'volume': np.sum}
+    df_new = df.resample(timeframe, offset=0).agg(ohlc)
+    #print(df_new.head())
+    # Save new dataframe 
+    with open (newFilePath, 'wb') as f:
+        pickle.dump(df_new, f)
+    print(f"Saved dataframe of new aggregated data for {timeframeText} to {newFilePath}")
+
+        
+
+
+
+import pathlib
+if __name__ == "__main__":
+    # dirPath = "F:\MarketData\STOCK\SP500\csv"
+    # onlyfiles = [f for f in os.listdir(dirPath) if os.path.isfile(os.path.join(dirPath, f))]
+    # for file in onlyfiles:
+    #     # extension = pathlib.Path(file).suffix
+    #     # split = file.split('.')
+    #     # pair = split[0]
+    #     # timeframe = '1d'
+    #     if ' ' in file:
+    #         newFileName = file.replace(" ", "")
+    #         os.rename(os.path.join(dirPath, file), os.path.join(dirPath, newFileName))
+    #         print(f"rename {file} to {newFileName}")
+
+    dirPath = "F:\MarketData\CRYPTO\pickle"
+    onlyfiles = [f for f in os.listdir(dirPath) if os.path.isfile(os.path.join(dirPath, f))]
+
+    # for file in onlyfiles:
+    #     filePath = os.path.join(dirPath, file)
+    #     with open(filePath, 'rb') as f:
+    #         df = pickle.load(f)
+    #     df = df.set_index('date')
+    #     with open(filePath, 'wb') as f:
+    #         pickle.dump(df, f)
+
+    for file in onlyfiles:
+        filePath = os.path.join(dirPath, file)
+        split = file.split('_')
+        pair = split[0]
+        timeframeTexts = ['5m', '10m', '15m', '30m', '1h', '2h', '4h', '1d', '1w']
+        timeframes = ['5MIN', '10MIN', '15MIN', '30MIN', '1H', '2H', '4H', '1D', '1W']
+        for i in range(len(timeframes)):
+            timeframe = timeframes[i]
+            timeframeText = timeframeTexts[i]
+            newFileName = f"{pair}_{timeframeText}.pkl"
+            newFilePath = os.path.join(dirPath, newFileName)
+            if not os.path.isfile(newFilePath):
+                aggregateKlines(pair, timeframe, timeframeText)
+            else:
+                print('File already exists')
     
