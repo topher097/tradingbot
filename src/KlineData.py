@@ -120,7 +120,7 @@ class KlineData():
                     df = df.iloc[:, :-6]                                                # Drop last 6 columns
                     df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']     # Set column names
                     df['date'] = pd.to_datetime(df['date'],unit='ms')                    # Convert unix to date time
-                    df.set_index('date')                                                # Set the date as the index column
+                    df = df.set_index('date')                                                # Set the date as the index column
                     return df
                 else:
                     raise Exception(f'No file: {filename}')
@@ -129,25 +129,27 @@ class KlineData():
         except Exception as e:
             logger.error(e)
 
-    def calculateHeikenAshi(self, klines):
-        """
-        Take ohlc kline data and calcuate the heiken ashi candles for data and return updated dataframe
-        """
-        df = klines
-        df['ha_close']=(df['open']+ df['high']+ df['low']+df['close'])/4
-        idx = df.index.name
-        df.reset_index(inplace=True)
-        for i in range(0, len(df)):
-            if i == 0:
-                df.set_value(i, 'ha_open', ((df.get_value(i, 'open') + df.get_value(i, 'close')) / 2))
-            else:
-                df.set_value(i, 'ha_open', ((df.get_value(i - 1, 'ha_open') + df.get_value(i - 1, 'ha_close')) / 2))
-        if idx:
-            df.set_index(idx, inplace=True)
-        df['ha_high']=df[['ha_open','ha_close','high']].max(axis=1)
-        df['ha_low']=df[['ha_open','ha_close','low']].min(axis=1)
-        
-        return df   # Dataframe with both OHLC and HA candle data
+def calculateHeikenAshi(klines):
+    """
+    Take ohlc kline data and calcuate the heiken ashi candles for data and return updated dataframe
+    """
+    df = klines
+    for c in df.columns:
+        df[c] = pd.to_numeric(df[c], downcast="float")
+    df['ha_close']=(df['open'] + df['high'] + df['low'] + df['close'])/4
+    idx = df.index.name
+    df.reset_index(inplace=True)
+    for i in range(0, len(df)):
+        if i == 0:
+            df.at[i, 'ha_open'] = (df.at[i, 'open'] + df.at[i, 'close']) / 2
+        else:
+            df.at[i, 'ha_open'] = (df.at[i - 1, 'ha_open'] + df.at[i - 1, 'ha_close']) / 2
+    if idx:
+        df.set_index(idx, inplace=True)
+    df['ha_high']=df[['ha_open','ha_close','high']].max(axis=1)
+    df['ha_low']=df[['ha_open','ha_close','low']].min(axis=1)
+    
+    return df   # Dataframe with both OHLC and HA candle data
 
 def aggregateKlines(pair, timeframe, timeframeText):
     dirPath = "F:\MarketData\CRYPTO\pickle"
@@ -199,19 +201,30 @@ if __name__ == "__main__":
     #     with open(filePath, 'wb') as f:
     #         pickle.dump(df, f)
 
+    # for file in onlyfiles:
+    #     filePath = os.path.join(dirPath, file)
+    #     split = file.split('_')
+    #     pair = split[0]
+    #     timeframeTexts = ['5m', '10m', '15m', '30m', '1h', '2h', '4h', '1d', '1w']
+    #     timeframes = ['5MIN', '10MIN', '15MIN', '30MIN', '1H', '2H', '4H', '1D', '1W']
+    #     for i in range(len(timeframes)):
+    #         timeframe = timeframes[i]
+    #         timeframeText = timeframeTexts[i]
+    #         newFileName = f"{pair}_{timeframeText}.pkl"
+    #         newFilePath = os.path.join(dirPath, newFileName)
+    #         if not os.path.isfile(newFilePath):
+    #             aggregateKlines(pair, timeframe, timeframeText)
+    #         else:
+    #             print(f'File already exists {newFilePath}')
+
     for file in onlyfiles:
         filePath = os.path.join(dirPath, file)
-        split = file.split('_')
-        pair = split[0]
-        timeframeTexts = ['5m', '10m', '15m', '30m', '1h', '2h', '4h', '1d', '1w']
-        timeframes = ['5MIN', '10MIN', '15MIN', '30MIN', '1H', '2H', '4H', '1D', '1W']
-        for i in range(len(timeframes)):
-            timeframe = timeframes[i]
-            timeframeText = timeframeTexts[i]
-            newFileName = f"{pair}_{timeframeText}.pkl"
-            newFilePath = os.path.join(dirPath, newFileName)
-            if not os.path.isfile(newFilePath):
-                aggregateKlines(pair, timeframe, timeframeText)
-            else:
-                print('File already exists')
+        with open(filePath, 'rb') as f:
+            
+            df = pickle.load(f)
+        df = calculateHeikenAshi(df)    
+
+        with open(filePath, 'wb') as file:
+            pickle.dump(df, file, protocol=pickle.HIGHEST_PROTOCOL)
+            print(f"Saved ha data to: {filePath}")
     
