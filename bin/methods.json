@@ -1,15 +1,23 @@
 {
-    "RSI":{
+    "method1":{
+        "name":"RSI1",
         "type":"close",
         "timePeriod":30,
         "overbought":70,
         "oversold":30
     },
 
-    "PSAR":{
+    "method2":{
+        "name":"PSAR1",
         "acceleration":0.02,
         "maximum":0.2,
         "strongTrend":3
+    },
+
+    "method3":{
+        "name":"EMA1",
+        "type":"close",
+        "timePeriod":15
     }
 
 }

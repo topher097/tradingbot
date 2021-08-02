@@ -19,7 +19,14 @@ logging_config = dict(
         'api-logger': {'class': 'logging.handlers.RotatingFileHandler',
                            'formatter': 'verbose',
                            'level': 'DEBUG',
-                           'filename': f'logs/api_{int(time.time())}.log',
+                           'filename': f'api_logs/api_{int(time.time())}.log',
+                           'mode': 'w',
+                           'maxBytes': 52428800,
+                           'backupCount': 7},
+        'plot-logger': {'class': 'logging.handlers.RotatingFileHandler',
+                           'formatter': 'verbose',
+                           'level': 'DEBUG',
+                           'filename': f'plotter_logs/api_{int(time.time())}.log',
                            'mode': 'w',
                            'maxBytes': 52428800,
                            'backupCount': 7},
@@ -31,6 +38,10 @@ logging_config = dict(
     loggers={
         'api_logger': {
             'handlers': ['api-logger', 'console'],
+            'level': 'DEBUG',
+        },
+        'plot_logger': {
+            'handlers': ['plot-logger', 'console'],
             'level': 'DEBUG'
         },
     }
@@ -39,3 +50,4 @@ logging_config = dict(
 dictConfig(logging_config)
 
 logger = logging.getLogger('api_logger')
+plotlogger = logging.getLogger('plot_logger')

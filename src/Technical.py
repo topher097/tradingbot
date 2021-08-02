@@ -1,8 +1,8 @@
-from BinanceConnect import *
+#from BinanceConnect import *
 import talib
 import numpy as np
 import pandas as pd
-from numpy import genfromtxt
+from numpy import dtype, genfromtxt
 from loggerSettings import logger
 
 class Technical():
@@ -10,112 +10,117 @@ class Technical():
         pass
     
     """ ********** OVERLAP STUDIES ********** """
-    def getParabolicSAR(self, klines, acceleration=0.02, maximum=0.2):
-        try:           
-            low = klines[:,3]
-            high = klines[:,2]
+    def getParabolicSAR(self, klines, attributes):
+        # type='close', timePeriod=30
+        try:         
+            acceleration    = attributes['acceleration']
+            maximum         = attributes['maximum']  
+            low             = klines['low'].to_numpy(dtype='f8')
+            high            = klines['high'].to_numpy(dtype='f8')
             return talib.SAR(low, high, acceleration=acceleration, maximum=maximum)
         except Exception as e:
             logger.error(e)
 
-    def getSMA(self, klines, type='close', timePeriod=30):
+    def getSMA(self, klines, attributes):
+        # type='close', timePeriod=30
         try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for SMA')
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']
+            d           = klines[type].to_numpy(dtype='f8')
             return talib.SMA(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
-    def getEMA(self, klines, type='close', timePeriod=30):
+    def getEMA(self, klines, attributes):
+        # type='close', timePeriod=30
         try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for EMA')
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']
+            d           = klines[type].to_numpy(dtype='f8') 
             return talib.EMA(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
-    def getMA(self, klines, type='close', timePeriod=30):
+    def getMA(self, klines, attributes):
+        # type='close', timePeriod=30
         try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for MA')
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']
+            d           = klines[type].to_numpy(dtype='f8')
             return talib.MA(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
-    def getBollingerBands(self, klines, type='close', timePeriod=30, stdevup=2, stdevdown=2, matype=0):
-        try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for Bollinger Bands')
-            upperBand, middleBand, lowerBand = talib.BBANDS(d, timeperiod=timePeriod, nbdevup=stdevup, nbdevdn=stdevdown, matype=0)
+    def getBollingerBands(self, klines, attributes):
+        # ex: type='close', timePeriod=30, stdevup=2, stdevdown=2, matype=0
+        try:  
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']
+            stdevup     = attributes['stdevpup']
+            stdevdown   = attributes['stdevpdown']         
+            matype      = attributes['matype']
+            d           = klines[type].to_numpy(dtype='f8')
+            upperBand, middleBand, lowerBand = talib.BBANDS(d, timeperiod=timePeriod, nbdevup=stdevup, nbdevdn=stdevdown, matype=matype)
             return upperBand, middleBand, lowerBand
         except Exception as e:
             logger.error(e)
 
     """ ********** MOMENTUM INDICATORS ********** """
-    def getRSI(self, klines, type='close', timePeriod=30):
-        try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for RSI')
+    def getRSI(self, klines, attributes):
+        # type='close', timePeriod=30
+        try:      
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']     
+            d           = klines[type].to_numpy(dtype='f8')
             return talib.RSI(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
-    def getMACD(self, klines, type='close', fastPeriod=15, fastMAtype=0, slowPeriod=30, slowMAtype=0, signalPeriod=9, signalMAtype=0):
+    def getROC(self, klines, attributes):
+        # type='close', timePeriod=30
+        try:      
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']     
+            d           = klines[type].to_numpy(dtype='f8')
+            return talib.ROC(d, timeperiod=timePeriod)
+        except Exception as e:
+            logger.error(e)
+
+    def getMACD(self, klines, attributes):
+        # type='close', fastPeriod=15, fastMAtype=0, slowPeriod=30, slowMAtype=0, signalPeriod=9, signalMAtype=0
         try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for MACD')
+            type            = attributes['type']
+            fastPeriod      = attributes['fastPeriod']
+            fastMAtype      = attributes['fastMAtype']
+            slowPeriod      = attributes['slowPeriod']
+            slowMAtype      = attributes['slowMAtype']
+            signalPeriod    = attributes['signalPeriod']
+            signalMAtype    = attributes['signalMAtype']
+            d               = klines[type].to_numpy(dtype='f8')
             macd, macdsignal, macdhist = talib.MACDEXT(d, fastperiod=fastPeriod, fastmatype=fastMAtype, slowperiod=slowPeriod, slowmatype=slowMAtype, signalperiod=signalPeriod, signalmatype=signalMAtype)
             return macd, macdsignal, macdhist
         except Exception as e:
             logger.error(e)
 
-    def getMFI(self, klines, type='close', timePeriod=30):
+    def getMFI(self, klines, attributes):
+        # type='close', timePeriod=30
         try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for MFI')
-            high    = klines[:,2]
-            low     = klines[:,3]
-            volume  = klines[:,5]
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']     
+            d           = klines[type].to_numpy(dtype='f8')
+            high        = klines['high'].to_nump(dtype='f8')
+            low         = klines['low'].to_nump(dtype='f8')
+            volume      = klines['volume'].to_nump(dtype='f8')
             return talib.MFI(high, low, d, volume, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)
 
-    def getMOM(self, klines, type='close', timePeriod=30):
-        try:           
-            if type=='open':
-                d = klines[:,1]
-            elif type=='close':
-                d = klines[:,4]
-            else:
-                raise Exception('Illegal type for MOM')
+    def getMOM(self, klines, attributes):
+        # type='close', timePeriod=30
+        try:      
+            type        = attributes['type']
+            timePeriod  = attributes['timePeriod']     
+            d           = klines[type].to_numpy(dtype='f8')
             return talib.MOM(d, timeperiod=timePeriod)
         except Exception as e:
             logger.error(e)

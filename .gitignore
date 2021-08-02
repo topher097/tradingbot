@@ -5,3 +5,4 @@ accountReport.json
 trade_logs/
 logs/
 __pycache__/
+*.log

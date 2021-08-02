@@ -3,7 +3,7 @@ import numpy as np
 from loggerSettings import logger
 from BinanceConnect import *
 import tensorflow as tf
-from bot import *
+from cryptoBot import *
 from Technical import *
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
