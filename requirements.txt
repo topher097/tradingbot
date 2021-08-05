@@ -3,7 +3,8 @@ numpy
 misc\talib_whl\TA_Lib-0.4.20-cp39-cp39-win_amd64.whl
 plotly
 matplotlib
+mplfinance
 pandas
 tensorflow
 h5py
-finplot
+simpleaudio

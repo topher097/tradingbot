@@ -72,7 +72,7 @@ class Technical():
             type        = attributes['type']
             timePeriod  = attributes['timePeriod']     
             d           = klines[type].to_numpy(dtype='f8')
-            return talib.RSI(d, timeperiod=timePeriod)
+            return talib.RSI(d, timeperiod=timePeriod)/100      # normalize 0-1
         except Exception as e:
             logger.error(e)
 

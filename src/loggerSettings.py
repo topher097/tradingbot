@@ -26,7 +26,7 @@ logging_config = dict(
         'plot-logger': {'class': 'logging.handlers.RotatingFileHandler',
                            'formatter': 'verbose',
                            'level': 'DEBUG',
-                           'filename': f'plotter_logs/api_{int(time.time())}.log',
+                           'filename': f'plotter_logs/plot_{int(time.time())}.log',
                            'mode': 'w',
                            'maxBytes': 52428800,
                            'backupCount': 7},

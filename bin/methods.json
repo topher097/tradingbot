@@ -4,20 +4,54 @@
         "type":"close",
         "timePeriod":30,
         "overbought":70,
-        "oversold":30
+        "oversold":30,
+        "plot":{"bool":"false"}
     },
 
     "method2":{
         "name":"PSAR1",
         "acceleration":0.02,
         "maximum":0.2,
-        "strongTrend":3
+        "strongTrend":3,
+        "plot":{"bool":"true",
+                "type":"scatter",
+                "linestyle":"dotted"}
     },
 
     "method3":{
         "name":"EMA1",
         "type":"close",
-        "timePeriod":15
+        "timePeriod":15,
+        "plot":{"bool":"true",
+                "type":"line",
+                "linestyle":"solid"}
+    },
+
+    "method4":{
+        "name":"EMA2",
+        "type":"close",
+        "timePeriod":30,
+        "plot":{"bool":"true",
+                "type":"line",
+                "linestyle":"solid"}
+    },
+
+    "method5":{
+        "name":"EMA3",
+        "type":"close",
+        "timePeriod":60,
+        "plot":{"bool":"true",
+                "type":"line",
+                "linestyle":"solid"}
+    },
+
+    "method6":{
+        "name":"EMA4",
+        "type":"close",
+        "timePeriod":100,
+        "plot":{"bool":"true",
+                "type":"line",
+                "linestyle":"solid"}
     }
 
 }
