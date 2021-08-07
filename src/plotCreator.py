@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 from mplfinance.original_flavor import candlestick2_ohlc
 import mplfinance as mpl
-import plotly
 import numpy as np
 import pandas as pd
 import dataclasses
