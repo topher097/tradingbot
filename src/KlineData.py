@@ -151,29 +151,15 @@ def calculateHeikenAshi(klines):
     
     return df   # Dataframe with both OHLC and HA candle data
 
-def aggregateKlines(pair, timeframe, timeframeText):
-    dirPath = "F:\MarketData\CRYPTO\pickle"
-    newFileName = f"{pair}_{timeframeText}.pkl"
-    minDataFilename = f"{pair}_1m.pkl"
-    newFilePath = os.path.join(dirPath, newFileName)
-    minFilePath = os.path.join(dirPath, minDataFilename)
-    # Load minute data
-    with open(minFilePath, 'rb') as f:
-        df = pickle.load(f)
-    df.dropna(how='any', axis=0, inplace=True)      # Drop all rows with NaN values
-    #print(df.head())
+def aggregateKlines(df, timeframe):
+    for c in df.columns:
+        df[c] = pd.to_numeric(df[c], downcast="float")
+
     # Aggregate data given timeframe
-    df['volume'] = pd.to_numeric(df['volume'], downcast="float")
-    ohlc = {'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'volume': np.sum}
-    df_new = df.resample(timeframe, offset=0).agg(ohlc)
-    #print(df_new.head())
-    # Save new dataframe 
-    with open (newFilePath, 'wb') as f:
-        pickle.dump(df_new, f)
-    print(f"Saved dataframe of new aggregated data for {timeframeText} to {newFilePath}")
-
-        
-
+    ohlc = {'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'ha_open': 'first', 'ha_high': 'max', 'ha_low': 'min', 'ha_close': 'last', 'volume': np.sum}
+    df_new = df.resample(timeframe, offset=0).agg(ohlc).dropna()
+    #df_new.fillna("backfill")
+    return df_new       
 
 
 import pathlib
@@ -192,39 +178,32 @@ if __name__ == "__main__":
 
     dirPath = "F:\MarketData\CRYPTO\pickle"
     onlyfiles = [f for f in os.listdir(dirPath) if os.path.isfile(os.path.join(dirPath, f))]
-
-    # for file in onlyfiles:
-    #     filePath = os.path.join(dirPath, file)
-    #     with open(filePath, 'rb') as f:
-    #         df = pickle.load(f)
-    #     df = df.set_index('date')
-    #     with open(filePath, 'wb') as f:
-    #         pickle.dump(df, f)
-
-    # for file in onlyfiles:
-    #     filePath = os.path.join(dirPath, file)
-    #     split = file.split('_')
-    #     pair = split[0]
-    #     timeframeTexts = ['5m', '10m', '15m', '30m', '1h', '2h', '4h', '1d', '1w']
-    #     timeframes = ['5MIN', '10MIN', '15MIN', '30MIN', '1H', '2H', '4H', '1D', '1W']
-    #     for i in range(len(timeframes)):
-    #         timeframe = timeframes[i]
-    #         timeframeText = timeframeTexts[i]
-    #         newFileName = f"{pair}_{timeframeText}.pkl"
-    #         newFilePath = os.path.join(dirPath, newFileName)
-    #         if not os.path.isfile(newFilePath):
-    #             aggregateKlines(pair, timeframe, timeframeText)
-    #         else:
-    #             print(f'File already exists {newFilePath}')
-
-    for file in onlyfiles:
+    redo = ["BCHUSDT", "BNBUSDT", "ETHUSDT", "LTCUSDT", "XRPUSDT"]
+    newonlyfiles = []
+    for r in redo:
+        for f in onlyfiles:
+            if r in f and '_1m' in f:
+                newonlyfiles.append(f)
+                
+    for file in newonlyfiles:
         filePath = os.path.join(dirPath, file)
         with open(filePath, 'rb') as f:
-            
             df = pickle.load(f)
-        df = calculateHeikenAshi(df)    
+            df1m = calculateHeikenAshi(df)
+        split = file.split('_')
+        pair = split[0]
+        timeframeTexts = ['5m', '10m', '15m', '30m', '1h', '2h', '4h', '1d', '1w']
+        timeframes = ['5MIN', '10MIN', '15MIN', '30MIN', '1H', '2H', '4H', '1D', '1W']
+        for i in range(len(timeframes)):
+            timeframe = timeframes[i]
+            timeframeText = timeframeTexts[i]
+            newFileName = f"{pair}_{timeframeText}.pkl"
+            newFilePath = os.path.join(dirPath, newFileName)
+            df = aggregateKlines(df1m, timeframe) 
+            with open(newFilePath, 'wb') as f:
+                pickle.dump(df, f, protocol=pickle.HIGHEST_PROTOCOL)
+            print(f"Saved dataframe of new aggregated data for {timeframeText} to {newFilePath}")
 
-        with open(filePath, 'wb') as file:
-            pickle.dump(df, file, protocol=pickle.HIGHEST_PROTOCOL)
-            print(f"Saved ha data to: {filePath}")
+
+        
     
