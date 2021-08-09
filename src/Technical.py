@@ -5,12 +5,9 @@ import pandas as pd
 from numpy import dtype, genfromtxt
 from loggerSettings import logger
 
-class Technical():
-    def __init__(self):
-        pass
-    
+class Technical:   
     """ ********** OVERLAP STUDIES ********** """
-    def getParabolicSAR(self, klines, attributes):
+    def getParabolicSAR(klines, attributes):
         # type='close', timePeriod=30
         try:         
             acceleration    = attributes['acceleration']
@@ -21,7 +18,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getSMA(self, klines, attributes):
+    def getSMA(klines, attributes):
         # type='close', timePeriod=30
         try:           
             type        = attributes['type']
@@ -31,7 +28,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getEMA(self, klines, attributes):
+    def getEMA(klines, attributes):
         # type='close', timePeriod=30
         try:           
             type        = attributes['type']
@@ -41,7 +38,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getMA(self, klines, attributes):
+    def getMA(klines, attributes):
         # type='close', timePeriod=30
         try:           
             type        = attributes['type']
@@ -51,7 +48,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getBollingerBands(self, klines, attributes):
+    def getBollingerBands(klines, attributes):
         # ex: type='close', timePeriod=30, stdevup=2, stdevdown=2, matype=0
         try:  
             type        = attributes['type']
@@ -66,7 +63,7 @@ class Technical():
             logger.error(e)
 
     """ ********** MOMENTUM INDICATORS ********** """
-    def getRSI(self, klines, attributes):
+    def getRSI(klines, attributes):
         # type='close', timePeriod=30
         try:      
             type        = attributes['type']
@@ -76,7 +73,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getROC(self, klines, attributes):
+    def getROC(klines, attributes):
         # type='close', timePeriod=30
         try:      
             type        = attributes['type']
@@ -86,7 +83,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getMACD(self, klines, attributes):
+    def getMACD(klines, attributes):
         # type='close', fastPeriod=15, fastMAtype=0, slowPeriod=30, slowMAtype=0, signalPeriod=9, signalMAtype=0
         try:           
             type            = attributes['type']
@@ -102,7 +99,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getMFI(self, klines, attributes):
+    def getMFI(klines, attributes):
         # type='close', timePeriod=30
         try:           
             type        = attributes['type']
@@ -115,7 +112,7 @@ class Technical():
         except Exception as e:
             logger.error(e)
 
-    def getMOM(self, klines, attributes):
+    def getMOM(klines, attributes):
         # type='close', timePeriod=30
         try:      
             type        = attributes['type']

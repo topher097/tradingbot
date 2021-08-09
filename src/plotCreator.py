@@ -254,7 +254,7 @@ if __name__ == "__main__":
             try:
                 window = 30              # Window size
                 step = 1                # Step to move window
-                maxImageCount = 25000       # Plots to render
+                maxImageCount = 200000       # Plots to render
                 showN = 0               # Plots to show
                 w = 256                 # Pixels
                 h = 256                 # Pixels
